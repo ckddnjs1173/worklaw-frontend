@@ -1,0 +1,67 @@
+﻿name: Frontend CI
+
+on:
+  push:
+    paths:
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "package.json"
+      - "package-lock.json"
+      - "next.config.*"
+      - "tsconfig*.json"
+      - ".eslintrc*"
+      - ".github/workflows/frontend-ci.yml"
+  pull_request:
+    paths:
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "package.json"
+      - "package-lock.json"
+      - "next.config.*"
+      - "tsconfig*.json"
+      - ".eslintrc*"
+      - ".github/workflows/frontend-ci.yml"
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: .
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      # 타입체크(Next.js 13+면 
+ext build가 타입체크 포함하지만, 분리하면 피드백이 더 빠릅니다)
+      - name: Type check
+        run: npx tsc -noEmit
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      # 단위테스트가 구성되어 있는 경우에만 실행 (없으면 건너뜀)
+      - name: Test
+        run: |
+          if npm run | grep -qE ' test$| test:' ; then
+            npm test -- --watch=false
+          else
+            echo "No test script defined, skipping."
+          fi
+
+      # 빌드(환경변수 최소값 주입)
+      - name: Build
+        env:
+          # FE가 API 주소를 필요로 하므로 더미/기본값을 제공
+          NEXT_PUBLIC_API_BASE_URL: "http://127.0.0.1:8000"
+        run: npm run build
