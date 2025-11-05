@@ -65,7 +65,7 @@ export default function ArticlePreview({ lawName, article }: Props) {
             <div key={`${v.article_no}-${v.version_date}`} className="space-y-2">
               <div className="text-sm font-medium">{v.version_date}</div>
               {/* 서버에서 안전하게 생성된 HTML만 신뢰. XSS 주의! */}
-              {/* eslint-disable-next-line react/no-danger */}
+              { }
               <div
                 className="prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{ __html: v.content_html }}
